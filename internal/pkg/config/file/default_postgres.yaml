@@ -1,0 +1,36 @@
+http:
+  BindAddress: ":8080"
+  Mode: debug #(debug,release,test)
+grpc:
+  BindAddress: ":9090"
+  Mode: debug #(debug,release,test)
+db:
+  Type: postgres
+  Host: localhost
+  Port: 54322
+  DBName: ks-data-prepare
+  User: postgres
+  Password: 123456
+  ConnLifeTime: 300
+  ConnTimeOut: 30
+  MaxIdleConns: 10
+  MaxOpenConns: 80
+  LogLevel: 1
+graph: 
+  Type: postgres
+  Host: localhost
+  Port: 5432
+  DBName: graph-node
+  User: graph-node
+  Password: let-me-in
+  ConnLifeTime: 300
+  ConnTimeOut: 30
+  MaxIdleConns: 10
+  MaxOpenConns: 80
+  LogLevel: 1
+redis:
+  RedisAddresses: 127.0.0.1:6379
+  Password:
+  MasterName:
+asynq:
+  Concurrency: 10

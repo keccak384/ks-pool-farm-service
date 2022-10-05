@@ -1,0 +1,9 @@
+drop table "elastic_bundles";
+drop table "elastic_factories";
+drop table "elastic_pools";
+drop table "elastic_positions";
+drop table "elastic_tokens";
+drop table "elastic_ticks";
+drop table "elastic_farms";
+drop table "elastic_farm_pools";
+drop table "elastic_joined_positions";

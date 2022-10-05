@@ -1,0 +1,120 @@
+version: "3.7"
+
+volumes:
+  postgresql_master_data: {}
+  mysql_master_data: {}
+
+networks:
+  app-tier:
+    driver: bridge
+services: 
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - app-tier
+    ports:
+      - '6379:6379'
+  
+  redis-slave:
+    image: 'bitnami/redis:latest'
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis
+      - ALLOW_EMPTY_PASSWORD=yes
+    depends_on:
+      - redis
+    networks:
+      - app-tier
+  
+  redis-sentinel:
+    image: 'bitnami/redis-sentinel:latest'
+    depends_on:
+      - redis
+      - redis-slave
+    environment:
+      - REDIS_MASTER_HOST=redis
+    ports:
+      - '26379-26381:26379'
+    networks:
+      - app-tier
+  postgresql-master:
+    image: docker.io/bitnami/postgresql:14
+    ports:
+      - 54322:5432
+    volumes:
+      - 'postgresql_master_data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_DATABASE=ks-data-prepare
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=123456
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - app-tier
+  postgresql-slave:
+    image: docker.io/bitnami/postgresql:14
+    ports:
+      - '5432'
+    depends_on:
+      - postgresql-master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password
+      - POSTGRESQL_MASTER_HOST=postgresql-master
+      - POSTGRESQL_PASSWORD=123456
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - app-tier
+  
+  # mysql-master:
+  #   image: 'bitnami/mysql:latest'
+  #   ports:
+  #     - 3306:3306
+  #   volumes:
+  #     - mysql_master_data:/bitnami/mysql/data
+  #   environment:
+  #     - MYSQL_REPLICATION_MODE=master
+  #     - MYSQL_REPLICATION_USER=repl_user
+  #     - MYSQL_REPLICATION_PASSWORD=repl_password
+  #     - MYSQL_USER=root
+  #     - MYSQL_DATABASE=simple_bank
+  #     - MYSQL_PASSWORD=123456
+  #     - MYSQL_ROOT_PASSWORD=123456
+  #   networks:
+  #     - app-tier
+ 
+  # mysql-slave:
+  #   image: 'bitnami/mysql:latest'
+  #   ports:
+  #     - '3306'
+  #   depends_on:
+  #     - mysql-master
+  #   environment:
+  #     - MYSQL_REPLICATION_MODE=slave
+  #     - MYSQL_REPLICATION_USER=repl_user
+  #     - MYSQL_REPLICATION_PASSWORD=repl_password
+  #     - MYSQL_MASTER_HOST=mysql-master
+  #     - MYSQL_MASTER_PORT_NUMBER=3306
+  #     - MYSQL_MASTER_ROOT_PASSWORD=123456
+  #   networks:
+  #     - app-tier
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8989:8080
+    depends_on:
+      # - mysql-master
+      # - mysql-slave
+      - postgresql-master
+      - postgresql-slave
+    networks:
+      - app-tier
